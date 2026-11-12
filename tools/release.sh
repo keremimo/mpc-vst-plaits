@@ -36,7 +36,8 @@ with zipfile.ZipFile(src) as z, zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) 
             info.external_attr = z.getinfo(n).external_attr
             w.writestr(info, z.read(n), zipfile.ZIP_DEFLATED)
     manifest = "%s/mpc-plugin.json" % top
-    if manifest in names:
+    # the portable folder may already carry the manifest: write it once
+    if manifest in names and skin + "/mpc-plugin.json" not in w.namelist():
         info = zipfile.ZipInfo(skin + "/mpc-plugin.json", (2026, 1, 1, 0, 0, 0))
         w.writestr(info, z.read(manifest), zipfile.ZIP_DEFLATED)
 print(dst)
