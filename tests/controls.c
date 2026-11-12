@@ -1,4 +1,4 @@
-/* Model buttons step and wrap; small nudges on NOTES/UNISON move one step (the data wheel case); a slow drag or
+/* Small nudges on NOTES/UNISON move one step (the data wheel case); a slow drag or
  * Q-Link sweep over a stepped knob moves steadily instead of flickering between two values. */
 #include <stdio.h>
 #include <stdint.h>
@@ -27,16 +27,8 @@ static void block(AEffect *a) { float L[128], R[128], *o[2] = {L, R}; a->pr(a, 0
 static void disp(AEffect *a, int i, char *d) { d[0] = 0; a->d(a, 7, i, 0, d, 0); }
 int main(void) {
     AEffect *a = VSTPluginMain(host);
-    int im = idx("model"), ip = idx("model_prev"), in = idx("model_next"), ipoly = idx("polyphony"), iuni = idx("unison");
+    int ipoly = idx("polyphony"), iuni = idx("unison");
     char d[64], d2[64];
-    disp(a, im, d);
-    a->setP(a, in, 1.0f); block(a); disp(a, im, d2);
-    CHECK(strcmp(d, d2), "next: %s -> %s", d, d2);
-    CHECK(automated_idx == im, "host told the model changed (automate %d)", automated_idx);
-    a->setP(a, ip, 1.0f); block(a); disp(a, im, d2);
-    CHECK(!strcmp(d, d2), "prev: back to %s", d2);
-    a->setP(a, im, 0.0f); a->setP(a, ip, 1.0f); block(a); disp(a, im, d2);
-    CHECK(!strcmp(d2, PARAMS[im].opts[PARAMS[im].nopts - 1]), "prev from the first wraps to %s", d2);
     for (int k = 0; k < 2; k++) {
         int i = k ? iuni : ipoly;
         disp(a, i, d); float n0 = a->getP(a, i);
@@ -57,7 +49,7 @@ int main(void) {
         for (int dir = 1; dir >= -1; dir -= 2) {
             for (int t = 0; t < 250; t++) {
                 pos += dir * 0.01f / steps;
-                a->setP(a, i, pos);
+                a->setP(a, i, pos); block(a);   /* the wrapper applies a set at the next block */
                 int v = (int)lroundf(a->getP(a, i) * steps);
                 if (first < 0) first = v;
                 if (prev >= 0 && (v - prev) * dir < 0) flips++;

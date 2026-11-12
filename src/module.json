@@ -1373,32 +1373,6 @@
           "On"
         ],
         "default": 1
-      },
-      {
-        "key": "model_prev",
-        "name": "MODEL <",
-        "type": "enum",
-        "options": [
-          "off",
-          "go"
-        ],
-        "default": 0,
-        "access": "write",
-        "step_of": "model",
-        "step_delta": -1
-      },
-      {
-        "key": "model_next",
-        "name": "MODEL >",
-        "type": "enum",
-        "options": [
-          "off",
-          "go"
-        ],
-        "default": 0,
-        "access": "write",
-        "step_of": "model",
-        "step_delta": 1
       }
     ]
   }
