@@ -73,6 +73,9 @@ build of Mutable Instruments' Plaits macro oscillator, the same way `mpc-vst-dx7
   - `plaits_move_engine.cpp`: the note sent to Plaits is clamped to 12..120 (C0..C9). MrHyde's pitch (+-48) plus
     its pitch mods went far below the module's range, where the slope oscillator blows up and the waveshaper then
     indexes its fold table with the result.
+  - `plaits/dsp/voice.cc`: the note after FM (the FM attenuverter's decay envelope, up to 48 semitones) is held at
+    12 (C0) and up, not -119: the clamp above comes before Plaits adds FM, so FM could still take the note below C0
+    and the Waveshaping engine read its fold table out of range.
   - `plaits/dsp/engine/wavetable_engine.cc`: smoothed x/y/z landing exactly on 7.0 gave bank -1 (null wave pointer).
   - `plaits/dsp/engine2/wave_terrain_engine.cc`: path coordinates clamped to [-1, 1]; the last wave of a bank no
     longer reads the wave after it.
@@ -120,6 +123,16 @@ build of Mutable Instruments' Plaits macro oscillator, the same way `mpc-vst-dx7
     computed from LPG DECAY, which cut the tails of engines with their own decay (strings, modal, 6-op, drums)
     about 2.7 s after release at the default DECAY.
   - The voice RAM buffer is `alignas(8)`: engines keep pointer tables in it.
+
+- **Model buttons removed** (`src/module.json`): `model_prev` / `model_next`, the last two parameters, are gone. The
+  page picks the model from a list and a Q-Link, and mpc-vst-plugins' `main` wrapper holds parameter 0 (MODEL) for
+  MPC's STOP toggle, which made a second press of either button do nothing. Every other parameter keeps its position.
+
+- **Slide and tie** (`plaits_move_engine.{h,cpp}` `ppf_engine_t::slide`, `freak_plugin.cpp` `on_midi`; `tests/slide.c`):
+  CC 84 names the key the next note goes on from, CC 68 down makes it a tie, as Melodee sends for its sequencer's
+  Slide and Tie steps. The held voices of that key take the new note with no new TRIG edge and no envelope restart; a
+  slide glides at GLIDE's rate (60 ms with GLIDE at 0, `VoiceState::slide_ms`), a tie jumps. With no held voice on
+  that key the note plays as usual.
 
 - **Sustain pedal** (`freak_plugin.cpp` `on_midi`): MrHyde ignored MIDI CCs. CC 64 now holds released keys until
   the pedal comes up; CC 120/123 (all sound / notes off) release everything. `tests/sustain.c`.

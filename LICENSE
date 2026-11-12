@@ -1,6 +1,7 @@
 MIT License
 
 Copyright (c) 2026 poloq
+Copyright (c) 2026 Kerem Kilic (Ellic Studio): the aarch64 build, Slide and Tie, the page and the factory sounds
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -34,5 +35,5 @@ listed in src/VENDORED.md) -- MIT License:
 src/dsp/third_party/eurorack/ (plaits, stmlib) -- Copyright Emilie Gillet,
 MIT License, per-file headers and stmlib/LICENSE.
 
-vst/art/src/plaits_v50_panel.svg and artwork derived from it (vst/images/,
-vst/art/bg.svg) -- Copyright Emilie Gillet, CC-BY-SA 3.0.
+vst/fonts/Rubik-VF.ttf -- the Rubik typeface, SIL Open Font License 1.1
+(vst/fonts/OFL.txt).

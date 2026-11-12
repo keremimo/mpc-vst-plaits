@@ -1,11 +1,23 @@
 # MPC Plaits
 
-**Mutable Instruments Plaits as a native instrument for Akai MPC standalone devices.**
+**Mutable Instruments Plaits as a native instrument for Akai MPC standalone devices and for
+[Melodee](https://github.com/keremimo/melodee-sample) on the MPC Sample.**
 
-All 24 Plaits models, up to 8 voices, LFOs, envelopes and two modulation matrices, synced to the MPC's tempo,
-with a touchscreen skin and Q-Link control. It loads from the MPC's own plugin browser like any other instrument.
+All 24 Plaits models, up to 8 voices, LFOs, envelopes and two modulation matrices, synced to the tempo, with an MPC
+screen page, Q-Link pages and 25 factory sounds. It loads from the MPC's own plugin browser like any other instrument,
+and on a PLUGIN track in Melodee.
 
-![The PLAITS page on an MPC One](docs/screenshots/plaits.png)
+This is a fork of [poloq-instruments/mpc-vst-plaits](https://github.com/poloq-instruments/mpc-vst-plaits). The sound
+engine is poloq's port. This fork adds:
+
+- an **aarch64 build** (Gen2 MPC OS devices and the MPC Sample) next to the armv7 one;
+- **Slide and Tie** from a sequencer (CC 84 and CC 68, as Melodee sends for its Slide and Tie steps);
+- a **page in Melodee's look** (NIGHT palette, Rubik), laid out so each three Q-Links are one row of K1-K3 in Melodee;
+- **25 factory sounds** in the PRESET menu (Melodee: PRESETS).
+
+The name, uid (`MiPl`), `plaits.so` and every parameter's position are unchanged, so projects saved with poloq's
+1.0.x open with this build and the other way round. The MODEL < and > buttons (the last two parameters) are gone:
+pick the model from its list or turn its Q-Link.
 
 ## Highlights
 
@@ -15,28 +27,36 @@ with a touchscreen skin and Q-Link control. It loads from the MPC's own plugin b
 - **Four ways to play the low-pass gate:** GATE, PING (struck), ENV (driven by an ADSR) and DRONE.
 - **Modulation:** two LFOs, two ADSRs, a cycling envelope and a random source, routed through a ready-made 4 x 4 matrix
   plus an assignable one (velocity, aftertouch, mod wheel into FM, LPG, filter, volume, pan and more).
-- **Tempo sync:** LFOs, random and retriggers follow the MPC's tempo and restart when it starts playing.
-- **A skin built for the MPC screen:** six pages, a live ADSR drawing, and Q-Links that follow the page you're on.
+- **Tempo sync:** LFOs, random and retriggers follow the tempo and restart when the sequencer starts.
 
 ## Requirements
 
-- A **first-generation MPC OS standalone device** (32-bit ARM): MPC One, Live, Live II, X, Key 61, or Force.
-- **Root SSH access** to it. Stock MPC OS doesn't offer this, so you need a modded unit.
-- Tested on an **MPC One running MPC OS 3.9.1**.
+- **MPC OS:** a first-generation standalone device (32-bit ARM: MPC One, Live, Live II, X, Key 61, Force) or a
+  second-generation one (aarch64), with root SSH access. Stock MPC OS doesn't offer this, so you need a modded unit.
+  poloq tested 1.0.x on an MPC One running MPC OS 3.9.1 (`tested.json`).
+- **Melodee:** an MPC Sample running Melodee.
 
 Installing plugins this way is unofficial: back up first, and use it at your own risk.
 
 ## Install
 
-1. Download `MPC-Plaits-<version>-mpc-armv7.zip` from [Releases](../../releases).
+### Melodee (MPC Sample)
+
+1. Download `MPC-Plaits-<version>-mpc-sample.zip` from [Releases](../../releases).
+2. Unzip it and copy the folder inside (`poloq - VST - MPC Plaits`) into `Plugins/` at the top of the SD card.
+3. Pick **MPC Plaits** on a PLUGIN track.
+
+### MPC OS
+
+1. Download `MPC-Plaits-<version>-mpc-armv7.zip` (Gen1, Force) or `-mpc-aarch64.zip` (Gen2) from Releases.
 2. Unzip it and copy the folder to the device:
    ```
-   scp -r MPC-Plaits-1.0.0 root@<device-ip>:/tmp/
+   scp -r MPC-Plaits-1.1.0 root@<device-ip>:/tmp/
    ```
 3. **Save your project**, then run the installer. It stops MPC, backs up `MPC.settings`, registers the plugin and
    starts MPC again:
    ```
-   ssh root@<device-ip> sh /tmp/MPC-Plaits-1.0.0/install.sh
+   ssh root@<device-ip> sh /tmp/MPC-Plaits-1.1.0/install.sh
    ```
 4. Add **MPC Plaits** to a track from the plugin browser (Instrument plugins).
 
@@ -48,59 +68,53 @@ Installing plugins this way is unofficial: back up first, and use it at your own
 
 ## The pages
 
-### PLAITS
+Eight tabs, each two rows. Q-Links follow the controls left to right, row 1 then row 2. In Melodee every three
+Q-Links are one row on K1-K3, so the groups below are Melodee's rows.
 
-The module panel. Pick a model with the LEDs, the arrows or the drop-down list, and shape it with FREQUENCY,
-HARMONICS, TIMBRE and MORPH. The three attenuverters (TIMBRE, FM, MORPH) set how far the per-note decay envelope moves
-each one, as on the hardware. OUT/AUX blends the model's two outputs.
-
-### VOICE
-
-![VOICE page](docs/screenshots/voice.png)
-
-| Section | Controls |
+| Tab | Rows of three |
 |---|---|
-| **AMP** | GATE (the gate follows the key), PING (struck, rings out with DECAY), ENV (ENV 1 drives the gate), DRONE (free-running). LPG COLOR, DECAY, and TRIG RATE: synced retriggers while a key is held, so Chiptune arpeggiates and drums ratchet. |
-| **VOICES** | MONO, POLY or LEGATO. NOTES (voice count), UNISON, DETUNE, SPREAD. |
-| **PLAY** | GLIDE, pitch BEND range, velocity and aftertouch curves. |
-| **OUTPUT** | Low-, band- or high-pass filter with CUTOFF and RESO, VOLUME and PAN. |
+| **PLAITS** | MODEL, FREQ, HARMONICS · TIMBRE, MORPH, OUT/AUX · the TIMBRE, FM and MORPH attenuverters · AMP, LPG COLOR, LPG DECAY |
+| **VOICE** | MODE, NOTES, UNISON · DETUNE, SPREAD, PAN · GLIDE, BEND, VEL CURVE · filter TYPE, CUTOFF, RESO |
+| **ENV** | ENV 1 ATTACK, DECAY, SUSTAIN · RELEASE, RETRIG, VOLUME · ENV 2 ATTACK, DECAY, SUSTAIN · RELEASE, RETRIG, TRIG RATE |
+| **LFO** | per LFO: SHAPE, RATE, PHASE · RETRIG, SYNC, SYNC DIV |
+| **CYCLE** | cycling envelope RISE, FALL, SHAPE · RANDOM MODE, RATE, SLEW · RETRIG, SYNC, SYNC DIV |
+| **ROUTES** | the assignable matrix's four sources and four destinations |
+| **ASSIGN** | its 16 amounts, a row per source, each with an ON switch |
+| **MOD** | the fixed matrix: LFO 1, ENV 2, CYCLE and RANDOM into PITCH, HARM, TIMBRE and MORPH, each with an ON switch |
 
-### ENV
+Switches that are set once (AT CURVE, LFO PER VOICE, CYCLE BIPOLAR and RETRIG, the matrix ON switches) are on the
+screen but not on Q-Links; in Melodee they come after the Q-Link pages.
 
-![ENV page](docs/screenshots/env.png)
+- **AMP:** GATE (the gate follows the key), PING (struck, rings out with DECAY), ENV (ENV 1 drives the gate), DRONE
+  (free-running).
+- **TRIG RATE:** synced retriggers while a key is held, so Chiptune arpeggiates and drums ratchet.
+- **The attenuverters** set how far the per-note decay envelope moves TIMBRE, FREQUENCY and MORPH, as on the module.
+- **The matrices:** every amount is bipolar and uses Plaits' own attenuverter curve, fine-grained around the centre.
+  ASSIGN starts routed as LFO 2, velocity, aftertouch and mod wheel into FM, LPG decay, cutoff and volume.
 
-Two per-voice ADSRs, each drawn live as you turn its knobs. ENV 1 is also the amplitude envelope in the ENV and DRONE
-amp modes. ENV 2 is a modulation source.
+## Factory sounds
 
-### LFO
+Init, Filter Bass, Saw Lead, Square Bass, PD Keys, FM Piano, FM Bells, Terrain Lead, String Ensemble, Chip Arp,
+Fold Bass, FM Pluck, Formant Voice, Drawbar Organ, Wavetable Pad, Chord Stab, Speech, Swarm Pad, Noise Sweep,
+Particle Drops, Plucked String, Modal Bell, Kick, Snare, Hi-Hat. A sound sets every parameter except VOLUME.
+`tools/make_presets.py` writes them to `vst/presets.json`.
 
-![LFO page](docs/screenshots/lfo.png)
+## MIDI
 
-Two LFOs (six shapes, free or synced to tempo, retrigger, per-voice, phase), a cycling envelope (linear, exponential or
-logarithmic, unipolar or bipolar) and a random source (sample-and-hold, smooth or drift).
-
-### MOD
-
-![MOD page](docs/screenshots/mod.png)
-
-A fixed 4 x 4 matrix: LFO 1, ENV 2, CYCLE and RANDOM into PITCH, HARMONICS, TIMBRE and MORPH. Nothing to set up: turn a
-knob and it's routed. Each cell has an on/off switch, so you can mute a route without losing its amount.
-
-### ASSIGN
-
-![ASSIGN page](docs/screenshots/assign.png)
-
-A second 4 x 4 matrix where you choose the sources (including velocity, aftertouch and mod wheel) and destinations
-(including FM, LPG decay, filter, volume, pan and OUT/AUX). It starts routed as LFO 2, velocity, aftertouch and mod wheel
-into FM, LPG decay, cutoff and volume.
-
-Every matrix amount is bipolar and uses Plaits' own attenuverter curve, which is fine-grained around the centre.
-
-**MIDI:** notes, velocity, sustain pedal, pitch bend, mod wheel, poly and channel aftertouch.
+| Message | Does |
+|---|---|
+| Note on / off | plays (velocity 0 is a release) |
+| Pitch bend | by BEND semitones |
+| CC 1 | the mod wheel |
+| Poly pressure, channel pressure | aftertouch |
+| CC 64 | sustain pedal |
+| CC 84, then a note | **slide**: the held voice of the key CC 84 named goes on as the new note, no new strike, gliding there at GLIDE's rate (60 ms with GLIDE at 0) |
+| CC 68 down, CC 84, then a note | **tie**: the same, without the glide |
+| CC 120 / 123 / 121 | all sound off / all notes off / reset controllers |
 
 ## CPU
 
-Measured on an MPC One with `tools/bench.sh`, as a share of one 128-sample audio block:
+poloq's measurement on an MPC One (`tools/bench.sh` in mpc-vst-plugins), as a share of one 128-sample audio block:
 
 | Load | p99 |
 |---|---|
@@ -109,24 +123,36 @@ Measured on an MPC One with `tools/bench.sh`, as a share of one 128-sample audio
 | Release tail | ~10% |
 | Fast Q-Link sweep | ~24% |
 
-The Q-Link sweep peak comes from Plaits recomputing the model's parameters on every step.
+The Q-Link sweep peak comes from Plaits recomputing the model's parameters on every step. The aarch64 build has no
+bench yet.
 
 ## Building from source
 
 <details>
-<summary>Build, install from source, screenshots and tests</summary>
+<summary>Build, release, install from source and tests</summary>
 
 ### Build
 
-Needs Docker and a sibling checkout of [mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins) on its
-**`poloq-dev`** branch, which has transport sync, popup `wheel=1`, `settle()` and per-column Q-Link outlines that
-aren't upstream yet. Set `MPC_VST` if it isn't at `../mpc-vst-plugins`.
+Needs Docker and a sibling checkout of [mpc-vst-plugins](https://github.com/open-mpc/mpc-vst-plugins) (`main`; poloq's
+`poloq-dev` branch has no aarch64 target or presets). Set `MPC_VST` if it isn't at `../mpc-vst-plugins`.
 
 ```
 ./build.sh
 ```
 
-Outputs `vst/build/plaits.so`, `vst/build/skin/poloq - VST - MPC Plaits/` and `vst/build/pluginlist-entry.xml`.
+Outputs `vst/build/plaits.so` (armv7), `vst/build/aarch64/plaits.so`, `vst/build/skin/poloq - VST - MPC Plaits/` and
+`vst/build/pluginlist-entry.xml`.
+
+The page and the sounds are generated: edit `tools/make_layout.py` or `tools/make_presets.py` and run it, then build.
+
+### Release
+
+```
+tools/release.sh
+```
+
+Builds both targets and writes `dist/`: the `-mpc-armv7.zip` and `-mpc-aarch64.zip` release zips (mpc-vst-plugins'
+`tools/release.py`), the `-mpc-sample.zip` (the aarch64 plug-in folder alone) and `SHA256SUMS.txt`.
 
 ### Install from source (MPC One)
 
@@ -134,32 +160,15 @@ Outputs `vst/build/plaits.so`, `vst/build/skin/poloq - VST - MPC Plaits/` and `v
 ./install_mpc_one.sh [--bench bench.json]
 ```
 
-Packages the build as a release zip (`tools/release.py`, catalog manifest included) and installs it on the MPC reachable
-as `ssh mpc`, into `/media/az01-internal/Synths`. That folder must be listed in `MPC.settings`'
-`SynthContentLocations`. The installer stops MPC, backs up `MPC.settings`, replaces any entry with the same uid and
-restarts MPC. `--bench` adds `tools/bench.sh -j` results to the release notes.
-
-MPC never cleans its skin image cache (`/var/tmp/filmstrips`, on the same partition). If space runs low, clear it with
-MPC stopped.
-
-### Screenshots
-
-```
-tools/screenshot.sh <name>
-```
-
-Saves what the MPC's screen shows right now to `docs/screenshots/<name>.png` (1280 x 800). MPC draws through the GPU,
-so this reads the display with ffmpeg's `kmsgrab` rather than the (empty) framebuffer.
+Packages the build as a release zip and installs it on the MPC reachable as `ssh mpc`, into
+`/media/az01-internal/Synths`. That folder must be listed in `MPC.settings`' `SynthContentLocations`.
 
 ### Tests
 
 - `TEST=tests/<name>.c tests/run_c.sh` builds one host test (`controls`, `notes`, `sustain`, `voices`, `voicing`,
-  `modulation`, `deadvoice`, `dump_defaults`) with ASan/UBSan in Docker and runs it. After editing a header,
-  `rm -rf tests/build` first. `notes` takes a mode argument (`-1` = all): `TEST=tests/notes.c tests/run_c.sh -1`.
+  `modulation`, `deadvoice`, `slide`, `presets`, `dump_defaults`) with ASan/UBSan in Docker and runs it. After editing
+  a header, `rm -rf tests/build` first. `notes` takes a mode argument (`-1` = all): `TEST=tests/notes.c tests/run_c.sh -1`.
 - `tests/run_fuzz.sh [blocks] [seed]` runs the random-input fuzzer (`tests/fuzz.c`).
-
-Offline host tests pass under ASan/UBSan, and fuzzing on x86 and 32-bit ARM is clean. The armhf build exports a single
-symbol (`VSTPluginMain`) and needs glibc 2.27 or later.
 
 ### Versioning
 
@@ -168,35 +177,26 @@ parameter positions change, because MPC stores a project's plugin values by posi
 
 </details>
 
-## Skin artwork
-
-Modelled on VCV Rack's "Macro Oscillator 2" panel. The icons, chevron band and OUT/AUX lettering come from Mutable
-Instruments' own panel artwork (`plaits_v50.ai`, © Emilie Gillet, CC-BY-SA 3.0), kept as
-`vst/art/src/plaits_v50_panel.svg`. `vst/art/make_art.py` (needs `rsvg-convert` and ImageMagick) builds `vst/images/`
-from it: the background, knob images and one LED-row picture per model. The derived artwork stays under CC-BY-SA 3.0.
-Nothing is taken from the VCV panel files themselves.
-
 ## Credits
 
-Port, skin and MPC integration by **poloq** ([poloq-instruments](https://github.com/poloq-instruments)).
+Port and MPC integration by **poloq** ([poloq-instruments](https://github.com/poloq-instruments)). Aarch64 build,
+Slide and Tie, Melodee page and factory sounds by Kerem Kilic (Ellic Studio).
 
 Built on:
 
 - **Emilie Gillet / Mutable Instruments**: [Plaits](https://github.com/pichenettes/eurorack/tree/master/plaits), the
-  original module and its DSP (MIT), and the panel artwork the skin is built from (CC-BY-SA 3.0).
+  original module and its DSP (MIT).
 - **[handcraftedcc](https://github.com/handcraftedcc)**: [schwung-mrhyde](https://github.com/handcraftedcc/schwung-mrhyde),
   the Plaits build for Ableton Move whose bridge is vendored here (see `src/VENDORED.md` for what was reused, dropped
   and changed).
 - **[charlesvestal](https://github.com/charlesvestal)**: [Schwung](https://github.com/charlesvestal/schwung) (formerly
   Move Anything), the plugin API that bridge targets.
-- **[sd88me](https://github.com/sd88me)**: [mpc-vst-plugins](https://github.com/sd88me/mpc-vst-plugins), the MPC OS
+- **[sd88me](https://github.com/sd88me)** and the Open MPC contributors: [mpc-vst-plugins](https://github.com/open-mpc/mpc-vst-plugins), the MPC OS
   VST2 wrapper, Schwung adapter and build and skin tooling this port is built with.
-- **VCV**: [Audible Instruments](https://github.com/VCVRack/AudibleInstruments)' "Macro Oscillator 2", the layout
-  reference for the skin (no files taken from it).
+- **Rubik** (SIL Open Font License, `vst/fonts/OFL.txt`), the typeface of the page.
 
 ## License
 
-MIT, see [`LICENSE`](LICENSE), which also lists the third-party components. The skin artwork derived from Mutable
-Instruments' panel is CC-BY-SA 3.0.
+MIT, see [`LICENSE`](LICENSE), which also lists the third-party components.
 
 *Not affiliated with or endorsed by Akai Professional or Mutable Instruments.*
