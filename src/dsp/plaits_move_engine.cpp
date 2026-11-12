@@ -220,6 +220,7 @@ struct VoiceState {
     float poly_aftertouch;
     float note_current;
     float note_target;
+    float slide_ms;          // mpc-vst-plaits: a sequenced slide's glide time (CC 84), over GLIDE; 0 = none
     int unison_slot;
     float pan_current;
     uint32_t age;
@@ -430,6 +431,7 @@ struct ppf_engine_t::Impl {
             v.poly_aftertouch = 0.0f;
             v.note_current = 0.0f;
             v.note_target = 0.0f;
+            v.slide_ms = 0.0f;
             v.unison_slot = 0;
             v.pan_current = 0.0f;
             v.age = 0;
@@ -508,6 +510,7 @@ struct ppf_engine_t::Impl {
         v.velocity = clampf(velocity, 0.0f, 1.0f);
         v.age = age_counter++;
         v.note_target = (float)note + detune;
+        v.slide_ms = 0.0f;
         if (!was_active) {
             v.note_current = v.note_target;
         }
@@ -791,6 +794,40 @@ void ppf_engine_t::note_on(int note, float velocity) {
     }
 }
 
+// mpc-vst-plaits: a slide or tie from a sequencer (Melodee's Slide and Tie steps: MIDI CC 84 names `from`, CC 68
+// held for a tie). The held voices of `from` go on as `to` with no new strike and no envelope restart. A slide
+// glides there at GLIDE's rate, or in 60 ms with GLIDE at 0; a tie jumps there. With no held `from`, `to` plays as
+// a normal note.
+void ppf_engine_t::slide(int from, int to, float velocity, bool glide) {
+    if (from == to) return;
+    int budget = impl_->active_voice_budget(params_);
+    bool found = false;
+    for (int i = 0; i < budget; ++i) {
+        VoiceState &v = impl_->voices[i];
+        if (!v.active || !v.gate || v.pending || v.note != from) continue;
+        float detune = v.note_target - (float)v.note;
+        v.note = to;
+        v.note_target = (float)to + detune;
+        v.age = impl_->age_counter++;
+        v.velocity = clampf(velocity, 0.0f, 1.0f);
+        if (glide) {
+            v.slide_ms = params_.glide_ms > 0 ? (float)params_.glide_ms : 60.0f;
+        } else {
+            v.slide_ms = 0.0f;
+            v.note_current = v.note_target;
+        }
+        found = true;
+    }
+    if (!found) {
+        note_on(to, velocity);
+        return;
+    }
+    if (params_.voice_mode != PPF_VOICE_POLY) {   // `to` is the held key now
+        impl_->mono_remove(from);
+        impl_->mono_push(to, velocity);
+    }
+}
+
 void ppf_engine_t::note_off(int note) {
     int budget = impl_->active_voice_budget(params_);
     if (params_.voice_mode != PPF_VOICE_POLY) {
@@ -892,11 +929,13 @@ void ppf_engine_t::render(float *out_l, float *out_r, int frames) {
             if (!v.active) continue;
 
             float note_glide = 1.0f;
-            if (P.glide_ms > 0) {
-                float glide_samples = ((float)P.glide_ms * 0.001f) * (float)PPF_SAMPLE_RATE;
+            float glide_ms = v.slide_ms > 0.0f ? v.slide_ms : (float)P.glide_ms;
+            if (glide_ms > 0.0f) {
+                float glide_samples = (glide_ms * 0.001f) * (float)PPF_SAMPLE_RATE;
                 note_glide = clampf((float)chunk / glide_samples, 0.0f, 1.0f);
             }
             v.note_current += (v.note_target - v.note_current) * note_glide;
+            if (v.slide_ms > 0.0f && fabsf(v.note_target - v.note_current) < 0.001f) v.slide_ms = 0.0f;
 
             // TRIG RATE: while the key is held, retrigger in time with the MPC (a new TRIG edge, and the envelopes
             // that retrigger on notes). Chiptune steps its arpeggio; drums, modal and 6-op ratchet; PING re-plucks.

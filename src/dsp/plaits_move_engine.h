@@ -166,6 +166,7 @@ public:
 
     void note_on(int note, float velocity);
     void note_off(int note);
+    void slide(int from, int to, float velocity, bool glide);   /* CC 84 slide (glide) or tie (CC 68: no glide) */
     void poly_aftertouch(int note, float pressure);
     void channel_pressure(float pressure);
     void pitch_bend(float amount);     /* -1..1, scaled by bend_range */

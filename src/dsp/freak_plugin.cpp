@@ -65,10 +65,14 @@ typedef struct {
     bool sustain;
     bool sustained[128];
     float notes_last;   // NOTES: the last position the host asked for (-1 = none yet), see set_param
+    // mpc-vst-plaits: a sequencer's slide or tie. CC 84 (portamento control) names the key the next note goes on
+    // from; the legato pedal (CC 68) down makes it a tie (no glide). Melodee sends these for Slide and Tie steps.
+    int slide_from;     // -1: none
+    bool legato;
 } freak_instance_t;
 
-// ---- the parameter table: one entry per src/module.json chain_params key (except the wrapper-only
-// model_prev / model_next). Enums travel as option indices, in module.json's option order.
+// ---- the parameter table: one entry per src/module.json chain_params key. Enums travel as option indices, in
+// module.json's option order.
 enum ParamType { P_FLOAT, P_INT, P_ENUM };
 
 struct ParamDef {
@@ -241,6 +245,8 @@ static void *create_instance(const char *module_dir, const char *json_defaults) 
     inst->sustain = false;
     memset(inst->sustained, 0, sizeof inst->sustained);
     inst->notes_last = -1.0f;
+    inst->slide_from = -1;
+    inst->legato = false;
     if (json_defaults && json_defaults[0]) apply_state_json(inst, json_defaults);
     inst->engine.init();
     inst->engine.set_params(inst->params);
@@ -264,7 +270,13 @@ static void on_midi(void *instance, const uint8_t *msg, int len, int source) {
     if (status == 0x90 && (msg[2] & 0x7F) != 0) {
         int note = msg[1] & 0x7F;
         inst->sustained[note] = false;
-        inst->engine.note_on(note, (float)(msg[2] & 0x7F) / 127.0f);
+        if (inst->slide_from >= 0) {
+            int from = inst->slide_from;
+            inst->slide_from = -1;
+            inst->engine.slide(from, note, (float)(msg[2] & 0x7F) / 127.0f, !inst->legato);
+        } else {
+            inst->engine.note_on(note, (float)(msg[2] & 0x7F) / 127.0f);
+        }
     } else if (status == 0x80 || status == 0x90) {
         int note = msg[1] & 0x7F;
         if (inst->sustain) {
@@ -288,12 +300,19 @@ static void on_midi(void *instance, const uint8_t *msg, int len, int source) {
                 }
             }
             inst->sustain = down;
+        } else if (cc == 68) {    // legato pedal: a slide while it is down is a tie
+            inst->legato = value >= 64;
+        } else if (cc == 84) {    // portamento control: the next note goes on from this key
+            inst->slide_from = value;
         } else if (cc == 121) {   // reset all controllers
+            inst->legato = false;
+            inst->slide_from = -1;
             inst->engine.mod_wheel(0.0f);
             inst->engine.pitch_bend(0.0f);
             inst->engine.channel_pressure(0.0f);
         } else if (cc == 120 || cc == 123) {   // all sound off / all notes off
             inst->engine.all_notes_off();
+            inst->slide_from = -1;
             inst->sustain = false;
             memset(inst->sustained, 0, sizeof(inst->sustained));
         }
