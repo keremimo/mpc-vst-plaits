@@ -199,7 +199,8 @@ void Voice::Render(
       internal_envelope_amplitude * \
           decay_envelope_.value() * decay_envelope_.value() * 48.0f,
       1.0f,
-      -119.0f,
+      12.0f,   // mpc-vst-plaits: was -119. The FM attenuverter's envelope took the note far below C0, where the slope
+               // oscillator blows up and the waveshaper reads its fold table out of range (fuzzer, seed 1).
       120.0f);
 
   p.timbre = ApplyModulations(
