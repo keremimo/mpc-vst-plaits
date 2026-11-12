@@ -2,10 +2,15 @@
   "name": "MPC Plaits",
   "vendor": "poloq",
   "uid": "MiPl",
-  "version": 1001,
+  "version": 1100,
   "so": "plaits.so",
+  "targets": [
+    "armv7",
+    "aarch64"
+  ],
   "module": "../src/module.json",
   "layout": "layout.conf",
+  "presets": "presets.json",
   "art": "html",
   "defines": {
     "HAS_LFO_BPM": 1,
@@ -72,6 +77,10 @@
       "src/dsp/third_party/eurorack/plaits/resources.cc",
       "src/dsp/third_party/eurorack/stmlib/utils/random.cc",
       "src/dsp/third_party/eurorack/stmlib/dsp/units.cc"
+    ],
+    "cflags_aarch64": [
+      "-O3",
+      "-funsafe-math-optimizations"
     ]
   },
   "short_names": {}
